@@ -2,6 +2,25 @@
 
 read and implement rules in backend/rules_qualitycode.md.md
 
+## 0. Continuous Knowledge Integration (Living Document Protocol)
+
+> **MANDATORY RULE FOR ALL ENGINEERS AND AI AGENTS:** 
+> This architecture document is a **Living Knowledge Base**. It is strictly prohibited to leave newly discovered architectural improvements, structural bug fixes, or optimized patterns undocumented. 
+
+During the software development lifecycle, if an AI agent or engineer discovers a new optimization, identifies an architectural anti-pattern, or formulates a highly effective technical standard (knowledge/skill), **it MUST be retroactively integrated into this document immediately**. This ensures the boilerplate evolves continuously toward greater efficiency, maintainability, and code quality.
+
+Every new integration MUST be logged in the **Changelog & Knowledge Updates** section at the very end (or beginning) of this document.
+
+### Required Update Format:
+Every update entry must strictly follow this list-based schema under the Changelog section:
+- **[YYYY-MM-DD]** - **[Short Title of Knowledge/Update]**: [Detailed explanation of WHAT the knowledge is, the anti-pattern resolved, or efficiency gained]. *(See Section X.Y for details)*.
+
+#### Example Changelog Entry:
+- **[2026-06-21]** - **Generic Repository Pattern**: Introduced Go Generics (1.18+) `BaseRepository[T]` to eliminate redundant CRUD boilerplate and enforce type-safe persistence operations. *(See Section 6.5)*.
+- **[2026-07-02]** - **Strict Context Isolation**: Defined strict isolation rules for `context.Context` to prevent mutable domain state leakage across layers. *(See Section 7.5)*.
+
+---
+
 ## 1. Overview
 This document defines the design and standards for a Generic Go Clean Architecture Base Project. The boilerplate provides a reusable, modular, and scalable foundation for future backend services, so teams don't need to re-architect from scratch for every new project, improving development velocity and cross-project consistency.
 
