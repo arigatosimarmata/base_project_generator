@@ -1,0 +1,9 @@
+.pat
+.env
+.DS_Store
+/bin/
+/vendor/
+/.idea/
+/.vscode/
+*.exe
+*.log
