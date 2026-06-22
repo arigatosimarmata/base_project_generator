@@ -25,6 +25,7 @@ Every update entry must strictly follow this list-based schema under the Changel
 - **[2026-06-22]** - **AI Auto-Commit Protocol**: Formalized the workflow for AI agents to automatically commit and push any new additions to this living document, ensuring seamless synchronization with the remote repository. *(See AI Agent Git Automation Protocol below)*.
 - **[2026-06-22]** - **Resilience Engineering**: Added mandatory Fail-Fast vs Silent-Failure classification rules, error propagation standards (wrap-with-context per layer, log-once rule), and distributed resilience patterns (Circuit Breaker, Retry+Backoff+Jitter, Timeout, Bulkhead, Idempotency, DLQ). *(See Section 7.22)*.
 - **[2026-06-22]** - **Database Performance & SQL Tuning**: Added mandatory EXPLAIN plan analysis rules, Two-Step Query / CTE pattern to replace dangerous dependent subqueries, composite index strategy, and non-negotiable SQL best practices (no `SELECT *`, non-sargable predicates, UNION ALL, parameterized queries, transaction isolation awareness). *(See Section 7.23)*.
+- **[2026-06-22]** - **Cognitive Complexity Reduction — Method Extraction Pattern**: Documented mandatory refactoring strategies for keeping function Cognitive Complexity ≤ 15 (SonarQube S3776): early-return guard clauses, private method extraction for enrichment logic, package-level const slices, and typed `applyIfNotNil`-style helpers to eliminate repetitive nil-pointer dereference blocks. *(See Section 7.24)*.
 
 ### AI Agent Git Automation Protocol
 When an AI agent updates this document, the agent MUST immediately execute the following isolated workflow:
@@ -856,3 +857,80 @@ Use window functions (`ROW_NUMBER`, `RANK`, `DENSE_RANK`) for top-N-per-group pa
 - **Beware implicit type casting**: `WHERE user_id = '123'` on an `INT` column casts every row to string, preventing index usage. Always match the literal type to the column type.
 - **Parameterized queries always**: never string-concatenate user input into SQL under any circumstances. Use `db.QueryContext(ctx, query, args...)` — the driver handles parameterization safely.
 - **Transaction isolation awareness**: understand `READ COMMITTED` vs `REPEATABLE READ` behavior for the queries in each usecase. Phantom reads and non-repeatable reads must be explicitly considered when writing transactional usecases (see 7.6 UnitOfWork).
+
+---
+
+### 7.24. Cognitive Complexity Reduction — Method Extraction Pattern
+
+SonarQube rule `go:S3776` flags any function with a Cognitive Complexity score above 15. Deep nesting (`if` inside `if` inside `for` inside `if`) is the primary driver of high scores. The mandatory resolution strategy is **method extraction with early-return guard clauses**.
+
+**Anti-pattern: monolithic function with nested ifs (Complexity ≈ 31)**
+
+```go
+// ❌ BAD: one function doing too many things, deeply nested
+func (u *FooUsecase) GetDetail(ctx context.Context, id string) (map[string]any, error) {
+    data, err := u.repo.Get(ctx, id)
+    if err == sql.ErrNoRows { return nil, nil }
+    if err != nil { return nil, err }
+
+    if data != nil {
+        keys := []string{"id", "created_at", ...} // re-allocated every call
+        for _, k := range keys { delete(data, k) }
+
+        if u.enrichRepo != nil {
+            extra, err := u.enrichRepo.Get(ctx, id)
+            if err == nil && extra != nil {
+                if extra.FieldA != nil { data["a"] = *extra.FieldA }
+                if extra.FieldB != nil { data["b"] = *extra.FieldB }
+                // ... 5+ more nil checks inline
+            }
+        }
+    }
+    return data, nil
+}
+```
+
+**Preferred pattern: extraction + early-return (Complexity ≤ 5 per function)**
+
+```go
+// ✅ GOOD: package-level slice — allocated once, never per-call
+var internalKeys = []string{"id", "created_at", "updated_at"}
+
+func (u *FooUsecase) GetDetail(ctx context.Context, id string) (map[string]any, error) {
+    data, err := u.repo.Get(ctx, id)
+    if err == sql.ErrNoRows { return nil, nil } // guard: not-found
+    if err != nil { return nil, err }           // guard: other error
+    if data == nil { return nil, nil }          // guard: empty map
+
+    for _, k := range internalKeys { delete(data, k) }
+    u.enrichFromExternal(ctx, id, data)         // delegated, isolated
+    return data, nil
+}
+
+// enrichFromExternal is a private method with its own early-return guards.
+// Failures are silent (degraded-mode): the caller still receives base data.
+func (u *FooUsecase) enrichFromExternal(ctx context.Context, id string, data map[string]any) {
+    if u.enrichRepo == nil { return }           // guard: optional dependency
+
+    extra, err := u.enrichRepo.Get(ctx, id)
+    if err != nil || extra == nil { return }    // guard: enrich unavailable
+
+    applyIfNotNil(data, "a", extra.FieldA)
+    applyIfNotNil(data, "b", extra.FieldB)
+    applyIfNotNil(data, "c", extra.FieldC)
+}
+
+// applyIfNotNil is a pure utility — no branching at the call site.
+func applyIfNotNil(dst map[string]any, key string, val *string) {
+    if val != nil { dst[key] = *val }
+}
+```
+
+**Rules to enforce:**
+
+1. **Hard limit per function**: Cognitive Complexity ≤ 15 (SonarQube default). Aim for ≤ 10 in new code.
+2. **Early-return for all guards** — eliminate the `if data != nil { ... entire body ... }` anti-pattern. Invert conditions, guard early, and keep the happy path at the leftmost indentation level.
+3. **Extract enrichment logic into private methods** — any block that calls an optional/secondary dependency (e.g., a second repo to enrich results) must be a separate method. This keeps the orchestrator function readable and the enrichment independently testable.
+4. **Package-level slice/map constants** — any slice of string keys or configuration values that is reused across calls must be declared at the package level (`var` or `const`), never inside a function body where it is re-allocated on every invocation.
+5. **Typed pointer-dereference helpers** (`applyIfNotNil`, `applyInt64IfNotNil`, etc.) — when a struct has multiple optional pointer fields that must be written into a `map`, use a shared helper to eliminate the repetitive `if field != nil { data[k] = *field }` pattern. Each helper is a pure function with a complexity of 1.
+6. **Naming convention for extracted methods**: prefix private helper methods with a verb that describes the concern — `enrichFrom*`, `buildFrom*`, `applyTo*` — so their intent is immediately clear to reviewers.
