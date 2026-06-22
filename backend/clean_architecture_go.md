@@ -1,4 +1,8 @@
 # Product Requirements Document (PRD): Generic Go Clean Architecture Boilerplate
+You are a Senior Back-End Engineer with 10+ years of production-grade experience.
+You specialize in building scalable, secure, and high-performance server-side systems
+at Enterprise scale — where correctness, resilience, and maintainability are
+non-negotiable, not afterthoughts.
 
 read and implement rules in backend/rules_qualitycode.md.md
 
@@ -19,6 +23,8 @@ Every update entry must strictly follow this list-based schema under the Changel
 - **[2026-06-21]** - **Generic Repository Pattern**: Introduced Go Generics (1.18+) `BaseRepository[T]` to eliminate redundant CRUD boilerplate and enforce type-safe persistence operations. *(See Section 6.5)*.
 - **[2026-07-02]** - **Strict Context Isolation**: Defined strict isolation rules for `context.Context` to prevent mutable domain state leakage across layers. *(See Section 7.5)*.
 - **[2026-06-22]** - **AI Auto-Commit Protocol**: Formalized the workflow for AI agents to automatically commit and push any new additions to this living document, ensuring seamless synchronization with the remote repository. *(See AI Agent Git Automation Protocol below)*.
+- **[2026-06-22]** - **Resilience Engineering**: Added mandatory Fail-Fast vs Silent-Failure classification rules, error propagation standards (wrap-with-context per layer, log-once rule), and distributed resilience patterns (Circuit Breaker, Retry+Backoff+Jitter, Timeout, Bulkhead, Idempotency, DLQ). *(See Section 7.22)*.
+- **[2026-06-22]** - **Database Performance & SQL Tuning**: Added mandatory EXPLAIN plan analysis rules, Two-Step Query / CTE pattern to replace dangerous dependent subqueries, composite index strategy, and non-negotiable SQL best practices (no `SELECT *`, non-sargable predicates, UNION ALL, parameterized queries, transaction isolation awareness). *(See Section 7.23)*.
 
 ### AI Agent Git Automation Protocol
 When an AI agent updates this document, the agent MUST immediately execute the following isolated workflow:
@@ -679,3 +685,174 @@ type Event struct {
 - **Health check**: when a broker is scaffolded into a project, extend that project's `/readyz` (7.19.2) to include a connectivity check for the broker, consistent with how DB/Redis/Mongo/ES checks are wired.
 
 **Why generate instead of always-include**: identical reasoning to 7.18 — bundling a message broker by default would force every derivative project (including simple CRUD services with no async needs) to run an extra container and carry extra dependencies. The base project provides the *pattern* (port/adapter, idempotent consumer design, dead-letter convention, separate worker process) so that adding Kafka or RabbitMQ to a project that needs it is fast and consistent, without penalizing the projects that don't.
+
+### 7.22. Resilience Engineering — Fail-Fast, Error Propagation & Distributed Patterns
+
+Enterprise systems must be designed for failure from day one. Resilience is a **core architectural concern**, not an optional add-on. Every engineer and AI agent working on this codebase must apply these rules without exception.
+
+**7.22.1 Fail-Fast vs Silent-Failure**
+
+The most important classification for any error handling decision: **is this fail-fast or silent?** Never leave this implicit.
+
+**Fail-Fast** — The application crashes or throws loudly the moment something goes wrong. This is the **correct** behavior for unrecoverable states. A service that dies loudly is easier to debug than one that silently returns wrong data.
+
+Mandatory fail-fast scenarios:
+- Database connection is down at startup → **do NOT start the service**
+- Required environment variable is missing → **do NOT proceed**
+- Config file is malformed → **do NOT silently use defaults**
+
+**Silent-Failure (ANTI-PATTERN — must be actively prevented)**
+
+The application swallows the error and returns a fake/empty response to the caller, making the system appear healthy when it is not. Silent wrong results are harder to detect than crashes — they corrupt data, mislead users, and surface as business problems, not technical alerts.
+
+Examples of silent-failure anti-patterns to prevent:
+- Function catches DB exception, returns empty list → caller thinks "no data exists" when actually the DB is down
+- Service times out calling upstream, returns cached stale response **without flagging it as stale**
+- Validation silently strips invalid fields instead of rejecting the request
+
+> **Rule**: Always ask: *"If this operation fails, will anyone know immediately?"* If the answer is NO — that is a silent failure. Fix it.
+
+**7.22.2 Error Propagation — Wrap, Context, Surface**
+
+Every error that crosses a layer boundary must carry context about **WHERE** it failed and **WHY** — not just what the error code was.
+
+```go
+// Repository layer — wrap with operation context
+func (r *userRepository) GetByID(ctx context.Context, id int64) (*domain.User, error) {
+    user, err := r.db.QueryRowContext(ctx, query, id)
+    if err != nil {
+        return nil, fmt.Errorf("repository.GetUserByID id=%d: %w", id, err)
+    }
+    return user, nil
+}
+```
+
+Layer responsibilities for error handling:
+- **Repository layer** → wraps DB/driver errors with operation context, maps to domain errors (e.g., `errs.ErrNotFound`)
+- **Usecase layer** → wraps domain/business logic errors with usecase context
+- **Handler layer** → maps domain errors to HTTP status + error envelope (see 6.3/6.4)
+- **Middleware** → catches any unhandled errors as 500, logs them with `request_id` (see 7.17), and alerts
+
+> **Critical Rule**: Never log AND re-throw the same error. **Log once at the top boundary (middleware/handler), propagate with context below.** Duplicate logs create noise that causes real alerts to be missed.
+
+**7.22.3 Resilience Patterns for Distributed Systems**
+
+Apply these patterns at the `clients/` adapter layer (see Section 5) for all outbound external/third-party calls:
+
+- **Circuit Breaker**: stop calling a failing downstream service and fail-fast immediately until it recovers. Prevents cascading failures across services.
+- **Retry with Exponential Backoff + Jitter**: apply only for **transient failures** (network blips, 503s). Never retry business logic errors (4xx responses must NOT be retried — they will always fail again).
+- **Timeout**: every external call — DB query, HTTP client, cache — must have an explicit `context.WithTimeout`. Never wait indefinitely. (Aligns with 7.5 Context Propagation.)
+- **Bulkhead**: isolate resource pools (e.g., separate connection pools per downstream) so one failing dependency cannot exhaust goroutines or connections for the entire service.
+- **Fallback / Degraded Mode**: define an explicit degraded-mode response when the primary path fails — but **always flag it explicitly**. Never return stale data as if it's fresh. Return a partial response with a clear signal (e.g., `"data_freshness": "stale"` in the response meta).
+- **Idempotency**: design mutation endpoints to be safely retried. Use idempotency keys (stored in DB/Redis) for payments, order creation, and any critical write that must not be double-applied.
+- **Dead-Letter Queue (DLQ)**: messages that repeatedly fail processing must be captured in a DLQ, never silently dropped. Aligns with 7.21's broker conventions.
+
+```go
+// Example: timeout + retry wrapper for an external client call
+func (c *stripeClient) Charge(ctx context.Context, req domain.ChargeRequest) (*domain.ChargeResult, error) {
+    callCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+    defer cancel()
+
+    var result *domain.ChargeResult
+    err := retry.Do(func() error {
+        var callErr error
+        result, callErr = c.doCharge(callCtx, req)
+        return callErr
+    },
+        retry.Attempts(3),
+        retry.DelayType(retry.BackOffDelay),
+        retry.OnRetry(func(n uint, err error) {
+            logger.Warn("stripe charge retry", zap.Uint("attempt", n), zap.Error(err))
+        }),
+    )
+    if err != nil {
+        return nil, fmt.Errorf("stripeClient.Charge: %w", err)
+    }
+    return result, nil
+}
+```
+
+---
+
+### 7.23. Database Performance & SQL Tuning
+
+Understanding **how** the database executes a query is more important than knowing how to write one. These rules apply to every query written in any repository in this codebase.
+
+**7.23.1 Execution Plan Analysis — Mandatory Before Shipping**
+
+Every non-trivial query **must be analyzed with `EXPLAIN` before deploying to any shared environment.**
+
+Key fields to read in MySQL `EXPLAIN` output:
+
+| Field | What to Look For |
+|---|---|
+| `type` | Access method ranked best→worst: `system > const > eq_ref > ref > range > index > ALL`. If you see `ALL` on a large table: **STOP** — that is a Full Table Scan. |
+| `key` | Which index was actually chosen (`NULL` = no index used). |
+| `rows` | Estimated rows examined — **not** rows returned. High `rows` = slow. |
+| `Extra: "Using filesort"` | Sort happening in memory/disk, not via index — expensive. |
+| `Extra: "Using temporary"` | Temp table created — expensive for `GROUP BY`/`DISTINCT`. |
+| `Extra: "Using index"` | Covering index hit — very efficient, base table not touched. |
+| `Extra: "Using where"` | Filter applied **after** row fetch — may indicate poor index coverage. |
+
+Run `EXPLAIN ANALYZE` (MySQL 8.0+) for actual execution stats, not estimates. A large discrepancy between `rows_estimated` vs `rows_actual` signals stale statistics — fix with `ANALYZE TABLE tablename;`.
+
+**7.23.2 Two-Step Query Pattern vs Dependent Subquery (Anti-Pattern)**
+
+For reporting queries on large tables, **always prefer the Two-Step / CTE approach** over dependent (correlated) subqueries.
+
+**Why dependent subqueries are dangerous**: a correlated subquery re-executes for **every row** in the outer query. On a table with 1,000,000 rows, the subquery runs 1,000,000 times. `EXPLAIN` will show `select_type: DEPENDENT SUBQUERY`.
+
+```sql
+-- ❌ ANTI-PATTERN: dependent subquery — re-runs per row
+SELECT * FROM transactions t
+WHERE t.amount = (
+    SELECT MAX(amount)
+    FROM transactions
+    WHERE branch_id = t.branch_id  -- ← correlated: re-executes per outer row
+)
+```
+
+```sql
+-- ✅ PREFERRED: two-step with CTE — the subquery runs exactly once
+WITH branch_max AS (
+    SELECT branch_id, MAX(amount) AS max_amount
+    FROM transactions
+    GROUP BY branch_id
+)
+SELECT t.*
+FROM transactions t
+JOIN branch_max r
+    ON t.branch_id = r.branch_id
+    AND t.amount = r.max_amount
+```
+
+> **Rule of thumb**: if a subquery references a column from the outer query (correlated subquery), always investigate whether it can be rewritten as a `JOIN` or CTE. It almost always can — and **should be**.
+
+Use window functions (`ROW_NUMBER`, `RANK`, `DENSE_RANK`) for top-N-per-group patterns as an alternative to CTEs where the DB optimizer handles them well.
+
+**7.23.3 Index Strategy — Design, Not Accident**
+
+- **Composite index column order matters**: `INDEX(a, b, c)` is used by queries filtering on `a`, `a+b`, or `a+b+c`. A query filtering only on `b` or `c` does **not** use this index. Place the most selective column (highest cardinality) first.
+- **Covering index**: include all columns a query needs in the index itself so the engine never touches the base table row. Ideal for high-frequency read queries on a known column set.
+- **Prefix index**: for long `VARCHAR`/`TEXT` columns, index only the first N chars to reduce index size — but this loses the covering index benefit.
+- **Index for sorting**: an index on `ORDER BY` columns eliminates `Using filesort`. For composites, the sort column must come *after* the equality filter column in the index definition.
+- **Avoid over-indexing**: every index slows down `INSERT`/`UPDATE`/`DELETE`. Audit unused indexes with `sys.schema_unused_indexes`.
+- **Remove redundant indexes**: `INDEX(a)` is made redundant by `INDEX(a, b)`. Use `sys.schema_redundant_indexes` to identify and clean them.
+
+**7.23.4 SQL Best Practices — Non-Negotiable Rules**
+
+- **Never use `SELECT *` in production code** — always name your columns. `SELECT *` fetches unneeded data and prevents covering index usage.
+- **Avoid non-sargable predicates** (predicates that cannot use an index):
+  ```sql
+  -- ❌ Bad: function wrapping the column prevents index usage
+  WHERE YEAR(created_at) = 2024
+
+  -- ✅ Good: range predicate on the column directly — fully sargable
+  WHERE created_at >= '2024-01-01' AND created_at < '2025-01-01'
+  ```
+  **Why `>= AND <` instead of `BETWEEN`**: `BETWEEN` is inclusive on BOTH ends. On a `DATETIME`/`TIMESTAMP` column, `BETWEEN '2024-01-01' AND '2024-12-31'` only captures up to `2024-12-31 00:00:00` — rows at `2024-12-31 09:00:00` or `2024-12-31 23:59:59` are **silently missed**. The `>= AND <` (end-exclusive) pattern captures the entire range correctly regardless of time component. Rule: use `BETWEEN` only on pure `DATE` columns; always use `>= AND <` on `DATETIME`/`TIMESTAMP`.
+- **LIMIT before JOIN on large result sets** — filter early, then join the small result set.
+- **`UNION ALL` instead of `UNION`** when duplicate elimination is not required — `UNION` sorts and deduplicates, which is expensive and unnecessary when source data is already distinct.
+- **Beware implicit type casting**: `WHERE user_id = '123'` on an `INT` column casts every row to string, preventing index usage. Always match the literal type to the column type.
+- **Parameterized queries always**: never string-concatenate user input into SQL under any circumstances. Use `db.QueryContext(ctx, query, args...)` — the driver handles parameterization safely.
+- **Transaction isolation awareness**: understand `READ COMMITTED` vs `REPEATABLE READ` behavior for the queries in each usecase. Phantom reads and non-repeatable reads must be explicitly considered when writing transactional usecases (see 7.6 UnitOfWork).
