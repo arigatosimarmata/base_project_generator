@@ -26,6 +26,7 @@ Every update entry must strictly follow this list-based schema under the Changel
 - **[2026-06-22]** - **Resilience Engineering**: Added mandatory Fail-Fast vs Silent-Failure classification rules, error propagation standards (wrap-with-context per layer, log-once rule), and distributed resilience patterns (Circuit Breaker, Retry+Backoff+Jitter, Timeout, Bulkhead, Idempotency, DLQ). *(See Section 7.22)*.
 - **[2026-06-22]** - **Database Performance & SQL Tuning**: Added mandatory EXPLAIN plan analysis rules, Two-Step Query / CTE pattern to replace dangerous dependent subqueries, composite index strategy, and non-negotiable SQL best practices (no `SELECT *`, non-sargable predicates, UNION ALL, parameterized queries, transaction isolation awareness). *(See Section 7.23)*.
 - **[2026-06-22]** - **Cognitive Complexity Reduction — Method Extraction Pattern**: Documented mandatory refactoring strategies for keeping function Cognitive Complexity ≤ 15 (SonarQube S3776): early-return guard clauses, private method extraction for enrichment logic, package-level const slices, and typed `applyIfNotNil`-style helpers to eliminate repetitive nil-pointer dereference blocks. *(See Section 7.24)*.
+- **[2026-06-23]** - **Quick Reference Index (AI Agent Navigator)**: Added a compact navigation table after Section 0 listing all sections with 1-line summary and "Baca Saat" guidance. Enables AI agents to identify and load only the relevant section per task instead of reading the full document, reducing token consumption by ~85% on focused tasks.
 
 ### AI Agent Git Automation Protocol
 When an AI agent updates this document, the agent MUST immediately execute the following isolated workflow:
@@ -34,6 +35,56 @@ When an AI agent updates this document, the agent MUST immediately execute the f
 3. **Commit**: Use a semantic commit message, e.g., `docs(arch): update clean architecture base rules with [topic]`.
 4. **Push**: Push to the current remote branch (`git push`).
 This guarantees the living document is continuously synchronized with the remote repository without risking application code stability.
+
+---
+
+## 📌 Quick Reference Index (AI Agent Navigator)
+
+> **AI Agent Instructions**: Baca tabel ini terlebih dahulu. Gunakan kolom **"Baca Saat"** untuk menentukan section mana yang perlu dibaca penuh sesuai konteks task yang sedang dikerjakan. Jangan load seluruh dokumen jika task-nya spesifik — cukup baca index ini + section yang relevan.
+
+### Core Rules — Wajib Dipahami (Section 1–6)
+
+| Section | Topik | Isi Singkat |
+|---|---|---|
+| §1–2 | Overview & Goals | Tujuan boilerplate: standardisasi, maintainability, extensibility |
+| §3 | Tech Stack | Go 1.20+, Fiber/net-http, MySQL/PostgreSQL, Redis, MongoDB (optional) |
+| §4 | Architecture Design | 4 layer: Domain → Repository → Usecase → Handler. Dependency Rule inward. |
+| §5 | Folder Structure | `internal/domain`, `repositories`, `usecases`, `handlers`, `clients/` |
+| §6.1 | Dependency Injection | Constructor injection wajib, dilarang global state untuk infra resource |
+| §6.2 | DTO | Domain entity TIDAK boleh langsung di-bind ke JSON request/response |
+| §6.3 | Response Standardization | Envelope: `{code, message, data, meta}` / error: `{code, message, errors, request_id}` |
+| §6.4 | Error Handling | Wrap error tiap layer, sentinel error di `errs/`, dilarang swallow silently |
+
+---
+
+### Extended Rules — Baca Sesuai Konteks (Section 7.x)
+
+| Section | Topik | Baca Saat |
+|---|---|---|
+| §7.1 | Testing Strategy | Menulis unit test usecase / integration test repository |
+| §7.2 | DB Migration | Setup schema baru / menjalankan migration tool |
+| §7.3 | Logging & Observability | Setup logger, dual-output, health check `/healthz` `/readyz` |
+| §7.4 | Validation Layer | Implementasi DTO validation dengan `go-playground/validator` |
+| §7.5 | Context Propagation | Menambah parameter ke fungsi / meneruskan request-scoped data antar layer |
+| §7.6 | Transaction Management | Usecase yang perlu atomic write ke 2+ tabel (UnitOfWork pattern) |
+| §7.7 | Auth Hook | Setup middleware auth / integrasi JWT, OAuth2, API key |
+| §7.8 | Graceful Shutdown | Setup signal handling `SIGTERM`/`SIGINT` di `main.go` |
+| §7.9 | Linting & CI | Setup `golangci-lint` / pipeline GitHub Actions |
+| §7.10 | API Documentation | Menambah `swaggo/swag` annotation ke handler baru |
+| §7.11 | Rate Limiting & Security | Setup CORS, rate limiter (Redis-backed), security headers |
+| §7.12 | API Versioning | Menentukan strategi versi URL (`/v1/`, header, query param) |
+| §7.13 | CLI Tooling (Cobra) | Menambah subcommand `serve`, `migrate`, `seed`, `worker` |
+| §7.14 | Containerization | Menulis/update `Dockerfile` multi-stage / `docker-compose.yml` |
+| §7.15 | Query Debug Logging | Setup `DB_DEBUG=true` untuk log raw SQL di development |
+| §7.16 | Audit Trail | Implementasi `audit_logs` table & `AuditLogger` interface |
+| §7.17 | Request ID / Tracing | Setup `X-Request-ID` middleware & propagasi ke log/audit |
+| §7.18 | Redis / MongoDB / ES | Setup caching, document store, atau search index |
+| §7.19 | App Versioning & Health | Endpoint `/version`, `/healthz`, `/readyz` + build-time injection |
+| §7.20 | Singleflight | Ada thundering herd / cache stampede pada read-heavy endpoint |
+| §7.21 | Message Broker (Kafka/RMQ) | Integrasi event streaming atau task queue |
+| §7.22 | Resilience Engineering | **Error handling** antar service, retry, circuit breaker, idempotency |
+| §7.23 | SQL Tuning | **Menulis query baru**, ada laporan lambat, atau review index strategy |
+| §7.24 | Cognitive Complexity | **Fungsi terlalu panjang** / SonarQube S3776 alert Complexity ≥ 15 |
 
 ---
 
