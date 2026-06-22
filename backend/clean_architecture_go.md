@@ -18,6 +18,15 @@ Every update entry must strictly follow this list-based schema under the Changel
 #### Example Changelog Entry:
 - **[2026-06-21]** - **Generic Repository Pattern**: Introduced Go Generics (1.18+) `BaseRepository[T]` to eliminate redundant CRUD boilerplate and enforce type-safe persistence operations. *(See Section 6.5)*.
 - **[2026-07-02]** - **Strict Context Isolation**: Defined strict isolation rules for `context.Context` to prevent mutable domain state leakage across layers. *(See Section 7.5)*.
+- **[2026-06-22]** - **AI Auto-Commit Protocol**: Formalized the workflow for AI agents to automatically commit and push any new additions to this living document, ensuring seamless synchronization with the remote repository. *(See AI Agent Git Automation Protocol below)*.
+
+### AI Agent Git Automation Protocol
+When an AI agent updates this document, the agent MUST immediately execute the following isolated workflow:
+1. **Validate**: Ensure the changelog format is strictly followed.
+2. **Isolate**: Stage ONLY this documentation file (`git add backend/clean_architecture_go.md`).
+3. **Commit**: Use a semantic commit message, e.g., `docs(arch): update clean architecture base rules with [topic]`.
+4. **Push**: Push to the current remote branch (`git push`).
+This guarantees the living document is continuously synchronized with the remote repository without risking application code stability.
 
 ---
 
