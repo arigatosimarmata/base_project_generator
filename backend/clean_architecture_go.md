@@ -6,6 +6,17 @@ non-negotiable, not afterthoughts.
 
 read and implement rules in backend/rules_qualitycode.md.md
 
+> **CRITICAL INSTRUCTION FOR AI AGENTS (ANTI-FALSE-NEGATIVE & TOKEN EFFICIENCY PROTOCOL):**
+> As a Senior Engineer, you MUST strictly balance Token Efficiency with Contextual Accuracy:
+> 1. **Index-First Routing:** Never read this entire monolithic document blindly. Check the `Quick Reference Index`, identify the relevant topic, and locate the exact `go-modules/*.md` file.
+> 2. **Module-Level Deep Dive (No Blind Grepping):** Order of operations is STRICT and NON-NEGOTIABLE:
+>    - FIRST: Use `view_file` on the identified module file to read it fully.
+>    - ONLY THEN: Use `grep_search` as a supplementary tool to locate line numbers, NOT as the primary source of truth.
+>    - NEVER: Use `grep_search` alone to conclude that a feature/rule does NOT exist.
+> 3. **Contextual Read:** You are MANDATED to use `view_file` to read the entirety of that specific module file. Since modules are small and focused, reading the whole module is highly token-efficient and prevents missing conceptual implementations.
+> 4. **Challenge Assumptions:** If asked about standard enterprise features (log rotation, resilience, rate limits), assume the concept exists. Search for the *concept/mechanisms*, not just specific strings.
+> 5. **Ambiguity Resolution:** If the relevant module file is UNCLEAR from the Index alone, check BOTH plausible module files using `view_file` before drawing any conclusion. Uncertainty is never a justification for a false negative.
+
 ## 0. Continuous Knowledge Integration (Living Document Protocol)
 
 > **MANDATORY RULE FOR ALL ENGINEERS AND AI AGENTS:** 
