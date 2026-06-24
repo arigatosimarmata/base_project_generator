@@ -12,7 +12,7 @@
 
 **Default Log Configuration**
 
-- **Storage location**: logs are written to a `logs/` directory at the project root. The application must auto-create this directory on startup if it doesn't exist (`os.MkdirAll("logs", 0755)`).
+- **Storage location**: logs must be written to a `logs/` directory located exactly where the application binary is executed (i.e., `./logs`). The application must auto-create this directory on startup if it doesn't exist (`os.MkdirAll("logs", 0755)`).
 - **File naming convention**: `{app-name}-{yyyy-mm-dd}.log` (e.g., `base-project-2026-06-21.log`), where `app-name` is read from config/env (`APP_NAME`).
 - **Rotation policy**: daily rotation with a default 21-day retention, implemented via [`lumberjack`](https://github.com/natefinch/lumberjack) (`MaxAge: 21`) or an equivalent rolling-file writer. Rotation settings should be exposed via config so derivative projects can override the retention window.
 - **Configurable Dual output (stdout + file)**: the logger defaults to writing to both stdout and the rotating log file simultaneously. However, this **must be configurable (parameterized)** so file output or stdout can be independently disabled if not needed (e.g., in environments where stdout alone is sufficient and disk writes are undesirable).
