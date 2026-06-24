@@ -13,18 +13,26 @@
 **Default Log Configuration**
 
 - **Storage location**: logs are written to a `logs/` directory at the project root. The application must auto-create this directory on startup if it doesn't exist (`os.MkdirAll("logs", 0755)`).
-- **File naming convention**: `{app-name}_{yyyy-mm-dd}.log` (e.g., `base-project_2026-06-21.log`), where `app-name` is read from config/env (`APP_NAME`).
-- **Rotation policy**: daily rotation with a default 7-day retention, implemented via [`lumberjack`](https://github.com/natefinch/lumberjack) (`MaxAge: 7`) or an equivalent rolling-file writer. Rotation settings should be exposed via config so derivative projects can override the retention window.
-- **Dual output (stdout + file)**: the logger must write to both stdout and the rotating log file simultaneously, using an `io.MultiWriter` (or the structured logger's equivalent multi-sink output), so terminal output and file output always stay identical — useful for local development (tail terminal) and container/orchestrator log collection (stdout is scraped by Docker/K8s) without losing the on-disk audit trail.
+- **File naming convention**: `{app-name}-{yyyy-mm-dd}.log` (e.g., `base-project-2026-06-21.log`), where `app-name` is read from config/env (`APP_NAME`).
+- **Rotation policy**: daily rotation with a default 21-day retention, implemented via [`lumberjack`](https://github.com/natefinch/lumberjack) (`MaxAge: 21`) or an equivalent rolling-file writer. Rotation settings should be exposed via config so derivative projects can override the retention window.
+- **Configurable Dual output (stdout + file)**: the logger defaults to writing to both stdout and the rotating log file simultaneously. However, this **must be configurable (parameterized)** so file output or stdout can be independently disabled if not needed (e.g., in environments where stdout alone is sufficient and disk writes are undesirable).
 
 ```go
 logFile := &lumberjack.Logger{
-    Filename: fmt.Sprintf("logs/%s_%s.log", appName, time.Now().Format("2006-01-02")),
-    MaxAge:   7, // days
+    Filename: fmt.Sprintf("logs/%s-%s.log", appName, time.Now().Format("2006-01-02")),
+    MaxAge:   21, // days
     Compress: true,
 }
-writer := io.MultiWriter(os.Stdout, logFile)
-logger := zap.New(zapcore.NewCore(encoder, zapcore.AddSync(writer), level))
+
+var cores []zapcore.Core
+if config.LogToStdout {
+    cores = append(cores, zapcore.NewCore(encoder, zapcore.AddSync(os.Stdout), level))
+}
+if config.LogToFile {
+    cores = append(cores, zapcore.NewCore(encoder, zapcore.AddSync(logFile), level))
+}
+
+logger := zap.New(zapcore.NewTee(cores...))
 ```
 
 - **Git exclusion**: add `logs/` to `.gitignore` at the project root so log files are never committed. A `.gitkeep` (or equivalent placeholder) can be added inside `logs/` if the folder itself needs to exist in version control while its contents stay ignored.
