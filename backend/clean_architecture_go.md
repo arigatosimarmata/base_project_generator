@@ -40,6 +40,8 @@ Every update entry must strictly follow this list-based schema under the Changel
 - **[2026-06-23]** - **Quick Reference Index (AI Agent Navigator)**: Added a compact navigation table after Section 0 listing all sections with 1-line summary and "Baca Saat" guidance. Enables AI agents to identify and load only the relevant section per task instead of reading the full document, reducing token consumption by ~85% on focused tasks.
 - **[2026-07-02]** - **Usecase Process Isolation**: Enforced standard that usecase layers must never call `log.Fatal` or `os.Exit`. Usecases must propagate errors upwards via wrapping (`fmt.Errorf`) to ensure graceful error handling at the entrypoint level. *(See Section 6.4)*.
 - **[2026-07-02]** - **Concurrent DDL Throttling**: Introduced concurrent dynamic schema/table creation pattern using Goroutines bounded by a semaphore channel to prevent DB connection pool exhaustion while increasing DDL execution speed by up to 20x. *(See Section 7.23)*.
+- **[2026-07-02]** - **Configurable Log Rotation & Dual Output**: Documented standard implementation of `gopkg.in/natefinch/lumberjack.v2` to support structured log rotation, size/age limits, and dual output routing (stdout + file) via environment variables to prevent disk saturation in long-running processes. *(See Section 7.3)*.
+
 
 ### AI Agent Git Automation Protocol
 When an AI agent updates this document, the agent MUST immediately execute the following isolated workflow:
