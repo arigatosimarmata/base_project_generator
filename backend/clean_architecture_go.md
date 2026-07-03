@@ -41,6 +41,8 @@ Every update entry must strictly follow this list-based schema under the Changel
 - **[2026-07-02]** - **Usecase Process Isolation**: Enforced standard that usecase layers must never call `log.Fatal` or `os.Exit`. Usecases must propagate errors upwards via wrapping (`fmt.Errorf`) to ensure graceful error handling at the entrypoint level. *(See Section 6.4)*.
 - **[2026-07-02]** - **Concurrent DDL Throttling**: Introduced concurrent dynamic schema/table creation pattern using Goroutines bounded by a semaphore channel to prevent DB connection pool exhaustion while increasing DDL execution speed by up to 20x. *(See Section 7.23)*.
 - **[2026-07-02]** - **Configurable Log Rotation & Dual Output**: Documented standard implementation of `gopkg.in/natefinch/lumberjack.v2` to support structured log rotation, size/age limits, and dual output routing (stdout + file) via environment variables to prevent disk saturation in long-running processes. *(See Section 7.3)*.
+- **[2026-07-03]** - **Centralized DB Connection Pool Parameterization**: Enforced centralization of database pool parameters (`MaxOpenConns`, `MaxIdleConns`, `ConnMaxLifetime`) via environment variables rather than hardcoding them in CLI command scopes, avoiding socket churn under high concurrent load. *(See Section 7.23)*.
+
 
 
 ### AI Agent Git Automation Protocol
