@@ -7,3 +7,9 @@
 /.vscode/
 *.exe
 *.log
+
+# Logs directory
+logs/
+
+# AI Sandbox
+medocs/
