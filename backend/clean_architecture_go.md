@@ -4,8 +4,6 @@ You specialize in building scalable, secure, and high-performance server-side sy
 at Enterprise scale — where correctness, resilience, and maintainability are
 non-negotiable, not afterthoughts.
 
-read and implement rules in backend/rules_qualitycode.md.md
-
 > **CRITICAL INSTRUCTION FOR AI AGENTS (ANTI-FALSE-NEGATIVE & TOKEN EFFICIENCY PROTOCOL):**
 > As a Senior Engineer, you MUST strictly balance Token Efficiency with Contextual Accuracy:
 > 1. **Index-First Routing:** Never read this entire monolithic document blindly. Check the `Quick Reference Index`, identify the relevant topic, and locate the exact `go-modules/*.md` file.
@@ -16,6 +14,45 @@ read and implement rules in backend/rules_qualitycode.md.md
 > 3. **Contextual Read:** You are MANDATED to use `view_file` to read the entirety of that specific module file. Since modules are small and focused, reading the whole module is highly token-efficient and prevents missing conceptual implementations.
 > 4. **Challenge Assumptions:** If asked about standard enterprise features (log rotation, resilience, rate limits), assume the concept exists. Search for the *concept/mechanisms*, not just specific strings.
 > 5. **Ambiguity Resolution:** If the relevant module file is UNCLEAR from the Index alone, check BOTH plausible module files using `view_file` before drawing any conclusion. Uncertainty is never a justification for a false negative.
+
+---
+
+## AI Agent Prompting Guide (How to Get Best Results)
+
+To maximize this modular PRD design and ensure AI agents (like Gemini/Antigravity) do not miss instructions due to context prioritization or fuzzy search limits, developers MUST use this structured prompt template when initiating tasks:
+
+### 💡 Recommended Prompt Template
+
+```markdown
+[1. CONTEXT ANCHORING - Core References]
+Reference:
+- Parent PRD: @[backend/clean_architecture_go.md]
+- Coding Rules: @[backend/rules_qualitycode.md]
+
+[2. ACTION - Specific Task]
+Please [write/create/refactor/verify] the [feature name / file path] to...
+
+[3. STRICT CONSTRAINTS - PRD Constraints]
+IMPORTANT: You MUST strictly adhere to the following project standards:
+- Use pattern [A] (e.g., early return / SELECT only / lumberjack).
+- DO NOT use [B] (e.g., no snake_case, no external frameworks without approval).
+- Verify if this rule is already documented in the [observability/security] module.
+```
+
+### 🛠️ AI Prompt Interpretation & Execution Rules
+
+When executing developer instructions structured using the template above, the AI agent MUST adhere to the following behaviors:
+
+1. **Explicit Reference Resolution (Context Anchoring):** When the developer mentions specific files (e.g., using `@[filename]`), you MUST immediately load and read the contents of those files using `view_file` to capture their requirements before writing any code.
+2. **Mandated Cross-Checking:** When the developer instructs you to "cross-check" or "verify" with a rules file (e.g., `@rules_qualitycode.md`), you MUST open that file, identify its constraints, and perform a strict compliance check against your proposed code.
+3. **Strict Adherence to Negative Constraints:** Any negative constraint (e.g., "DO NOT", "JANGAN", "never", "prohibited") in the prompt or referenced PRD files represents a blocking rule. You MUST explicitly verify that your final output does not violate any of these constraints.
+4. **Triggered Deep Analysis (Keywords: "Analyze/Analisa", "Check/Cek"):** If the developer's prompt contains analysis keywords (e.g., "Analyze", "Analisa", "Check", "Cek", "Investigate"):
+   - You MUST first inspect the `Quick Reference Index` to see if the topic is mapped to any module.
+   - If mapped, you MUST use `view_file` to read that module file completely.
+   - If the topic is NOT in the Index, you MUST perform a repository-wide fuzzy/synonym search across all `go-modules/` files using `grep_search` to verify if the concept is discussed elsewhere under a different name.
+   - You are strictly prohibited from declaring a feature or rule "not found" without performing this double-check sequence.
+
+---
 
 ## 0. Continuous Knowledge Integration (Living Document Protocol)
 
@@ -42,6 +79,7 @@ Every update entry must strictly follow this list-based schema under the Changel
 - **[2026-07-02]** - **Concurrent DDL Throttling**: Introduced concurrent dynamic schema/table creation pattern using Goroutines bounded by a semaphore channel to prevent DB connection pool exhaustion while increasing DDL execution speed by up to 20x. *(See Section 7.23)*.
 - **[2026-07-02]** - **Configurable Log Rotation & Dual Output**: Documented standard implementation of `gopkg.in/natefinch/lumberjack.v2` to support structured log rotation, size/age limits, and dual output routing (stdout + file) via environment variables to prevent disk saturation in long-running processes. *(See Section 7.3)*.
 - **[2026-07-03]** - **Centralized DB Connection Pool Parameterization**: Enforced centralization of database pool parameters (`MaxOpenConns`, `MaxIdleConns`, `ConnMaxLifetime`) via environment variables rather than hardcoding them in CLI command scopes, avoiding socket churn under high concurrent load. *(See Section 7.23)*.
+- **[2026-07-06]** - **AI Agent Prompting Guide**: Added Section 8 detailing prompting best practices (context anchoring, constraints, and explicit cross-checking) to prevent AI oversight and ensure strict adherence to modular PRD modules. *(See Section 8)*.
 
 
 
