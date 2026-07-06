@@ -1,7 +1,9 @@
 # Go Module: Infrastructure
-> **Belongs to:** `backend/clean_architecture_go.md` — Living Document
+> **Belongs to:** [clean_architecture_go.md](../clean_architecture_go.md) — Living Document
 > **Last Updated:** See Changelog in `clean_architecture_go.md` Section 0
 > **Sections:** §7.2 · §7.8 · §7.13 · §7.14
+> **Keywords:** migration, goose, golang-migrate, seeder, graceful shutdown, signal, CLI, cobra, Dockerfile, docker-compose, infrastructure
+> **Target Folder/Packages:** `cmd/`, `database/migration/`, `deploy/`
 
 ---
 

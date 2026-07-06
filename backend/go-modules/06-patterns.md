@@ -1,7 +1,9 @@
 # Go Module: Patterns
-> **Belongs to:** `backend/clean_architecture_go.md` — Living Document
+> **Belongs to:** [clean_architecture_go.md](../clean_architecture_go.md) — Living Document
 > **Last Updated:** See Changelog in `clean_architecture_go.md` Section 0
 > **Sections:** §7.5 · §7.6 · §7.15 · §7.21 · §7.22
+> **Keywords:** context, transaction, atomic, db debug, broker, kafka, rabbitmq, resilience, retry, circuit breaker, timeout, bulkhead, fail-fast
+> **Target Folder/Packages:** `internal/usecases/`, `internal/domain/`
 
 ---
 

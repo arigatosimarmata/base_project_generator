@@ -1,7 +1,9 @@
 # Go Module: Data Layer
-> **Belongs to:** `backend/clean_architecture_go.md` — Living Document
+> **Belongs to:** [clean_architecture_go.md](../clean_architecture_go.md) — Living Document
 > **Last Updated:** See Changelog in `clean_architecture_go.md` Section 0
 > **Sections:** §7.18 · §7.20 · §7.23
+> **Keywords:** database, sql, mysql, postgresql, redis, cache, mongodb, elasticsearch, singleflight, sql tuning, explain, connection pool, semaphore
+> **Target Folder/Packages:** `internal/repositories/`
 
 ---
 

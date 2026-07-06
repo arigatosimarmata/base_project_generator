@@ -1,7 +1,9 @@
 # Go Module: Quality
-> **Belongs to:** `backend/clean_architecture_go.md` — Living Document
+> **Belongs to:** [clean_architecture_go.md](../clean_architecture_go.md) — Living Document
 > **Last Updated:** See Changelog in `clean_architecture_go.md` Section 0
 > **Sections:** §7.1 · §7.4 · §7.9 · §7.10 · §7.24
+> **Keywords:** testing, unit test, mock, mockery, validation, validator, lint, golangci-lint, ci, cd, swagger, api docs, cognitive complexity, sonar, sonarqube
+> **Target Folder/Packages:** `tests/`, `internal/...` (validation/complexity)
 
 ---
 

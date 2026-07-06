@@ -74,14 +74,14 @@ This guarantees the living document is continuously synchronized with the remote
 
 ### Extended Rules — Read the Module File (`go-modules/`)
 
-| Module File | Sections Covered | When to Read |
-|---|---|---|
-| `go-modules/01-infrastructure.md` | §7.2 DB Migration · §7.8 Graceful Shutdown · §7.13 CLI Cobra · §7.14 Docker | Setting up infra, migration, containerization, CLI subcommands |
-| `go-modules/02-observability.md` | §7.3 Logging · §7.17 Request ID/Tracing · §7.19 Health/Version endpoints | Logger setup, dual-output, `/healthz`, `/readyz`, `X-Request-ID` middleware |
-| `go-modules/03-data-layer.md` | §7.18 Redis/MongoDB/ES · §7.20 Singleflight · §7.23 SQL Tuning | Caching, datastore setup, thundering herd, query performance, EXPLAIN analysis |
-| `go-modules/04-security.md` | §7.7 Auth Hook · §7.11 Rate Limiting · §7.12 API Versioning · §7.16 Audit Trail | Auth middleware, audit log, rate limiter, security headers, API version strategy |
-| `go-modules/05-quality.md` | §7.1 Testing · §7.4 Validation · §7.9 Linting/CI · §7.10 API Docs · §7.24 Complexity | Unit tests, SonarQube S3776 alert, golangci-lint, swaggo annotations |
-| `go-modules/06-patterns.md` | §7.5 Context · §7.6 Transaction · §7.15 Query Debug · §7.21 Broker · §7.22 Resilience | Context propagation, atomic writes, retry/circuit breaker, Kafka/RMQ, DB_DEBUG |
+| Module File | Target Folder / Packages | Sections Covered | When to Read |
+|---|---|---|---|
+| [01-infrastructure.md](go-modules/01-infrastructure.md) | `cmd/`, `database/migration/`, `deploy/` | §7.2 DB Migration · §7.8 Graceful Shutdown · §7.13 CLI Cobra · §7.14 Docker | Setting up infra, migration, containerization, CLI subcommands |
+| [02-observability.md](go-modules/02-observability.md) | `internal/infrastructure/logger/`, `internal/handlers/health/` | §7.3 Logging · §7.17 Request ID/Tracing · §7.19 Health/Version endpoints | Logger setup, dual-output, `/healthz`, `/readyz`, `X-Request-ID` middleware |
+| [03-data-layer.md](go-modules/03-data-layer.md) | `internal/repositories/` | §7.18 Redis/MongoDB/ES · §7.20 Singleflight · §7.23 SQL Tuning | Caching, datastore setup, thundering herd, query performance, EXPLAIN analysis |
+| [04-security.md](go-modules/04-security.md) | `internal/middleware/auth/`, `internal/middleware/ratelimit/` | §7.7 Auth Hook · §7.11 Rate Limiting · §7.12 API Versioning · §7.16 Audit Trail | Auth middleware, audit log, rate limiter, security headers, API version strategy |
+| [05-quality.md](go-modules/05-quality.md) | `tests/`, `internal/...` (validation/complexity) | §7.1 Testing · §7.4 Validation · §7.9 Linting/CI · §7.10 API Docs · §7.24 Complexity | Unit tests, SonarQube S3776 alert, golangci-lint, swaggo annotations |
+| [06-patterns.md](go-modules/06-patterns.md) | `internal/usecases/`, `internal/domain/` | §7.5 Context · §7.6 Transaction · §7.15 Query Debug · §7.21 Broker · §7.22 Resilience | Context propagation, atomic writes, retry/circuit breaker, Kafka/RMQ, DB_DEBUG |
 
 ### Adding a New Module
 

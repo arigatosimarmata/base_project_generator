@@ -1,7 +1,9 @@
 # Go Module: Security
-> **Belongs to:** `backend/clean_architecture_go.md` — Living Document
+> **Belongs to:** [clean_architecture_go.md](../clean_architecture_go.md) — Living Document
 > **Last Updated:** See Changelog in `clean_architecture_go.md` Section 0
 > **Sections:** §7.7 · §7.11 · §7.12 · §7.16
+> **Keywords:** security, authentication, auth, authorization, token, jwt, api key, rate limit, versioning, API version, audit, audit trail, audit log, middleware
+> **Target Folder/Packages:** `internal/middleware/auth/`, `internal/middleware/ratelimit/`
 
 ---
 
