@@ -3,7 +3,7 @@
 > **Last Updated:** See Changelog in `clean_architecture_go.md` Section 0
 > **Sections:** §7.3 · §7.17 · §7.19
 > **Keywords:** log, logging, log-rotate, rotation, lumberjack, health check, healthz, readyz, request-id, tracing, metrics, zap, zerolog, opentelemetry, prometheus
-> **Target Folder/Packages:** `internal/infrastructure/logger/`, `internal/handlers/health/`
+> **Target Folder/Packages:** `logger/`, `internal/handlers/health/`
 
 ---
 
