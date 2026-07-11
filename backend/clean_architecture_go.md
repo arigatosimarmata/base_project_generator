@@ -4,53 +4,19 @@ You specialize in building scalable, secure, and high-performance server-side sy
 at Enterprise scale — where correctness, resilience, and maintainability are
 non-negotiable, not afterthoughts.
 
-> **CRITICAL INSTRUCTION FOR AI AGENTS (ANTI-FALSE-NEGATIVE & TOKEN EFFICIENCY PROTOCOL):**
-> As a Senior Engineer, you MUST strictly balance Token Efficiency with Contextual Accuracy:
-> 1. **Index-First Routing:** Never read this entire monolithic document blindly. Check the `Quick Reference Index`, identify the relevant topic, and locate the exact `go-modules/*.md` file.
-> 2. **Module-Level Deep Dive (No Blind Grepping):** Order of operations is STRICT and NON-NEGOTIABLE:
->    - FIRST: Use `view_file` on the identified module file to read it fully.
->    - ONLY THEN: Use `grep_search` as a supplementary tool to locate line numbers, NOT as the primary source of truth.
->    - NEVER: Use `grep_search` alone to conclude that a feature/rule does NOT exist.
-> 3. **Contextual Read:** You are MANDATED to use `view_file` to read the entirety of that specific module file. Since modules are small and focused, reading the whole module is highly token-efficient and prevents missing conceptual implementations.
-> 4. **Challenge Assumptions:** If asked about standard enterprise features (log rotation, resilience, rate limits), assume the concept exists. Search for the *concept/mechanisms*, not just specific strings.
-> 5. **Ambiguity Resolution:** If the relevant module file is UNCLEAR from the Index alone, check BOTH plausible module files using `view_file` before drawing any conclusion. Uncertainty is never a justification for a false negative.
-
----
-
-## AI Agent Prompting Guide (How to Get Best Results)
-
-To maximize this modular PRD design and ensure AI agents (like Gemini/Antigravity) do not miss instructions due to context prioritization or fuzzy search limits, developers MUST use this structured prompt template when initiating tasks:
-
-### 💡 Recommended Prompt Template
-
-```markdown
-[1. CONTEXT ANCHORING - Core References]
-Reference:
-- Parent PRD: @[backend/clean_architecture_go.md]
-- Coding Rules: @[backend/rules_qualitycode.md]
-
-[2. ACTION - Specific Task]
-Please [write/create/refactor/verify] the [feature name / file path] to...
-
-[3. STRICT CONSTRAINTS - PRD Constraints]
-IMPORTANT: You MUST strictly adhere to the following project standards:
-- Use pattern [A] (e.g., early return / SELECT only / lumberjack).
-- DO NOT use [B] (e.g., no snake_case, no external frameworks without approval).
-- Verify if this rule is already documented in the [observability/security] module.
-```
-
-### 🛠️ AI Prompt Interpretation & Execution Rules
-
-When executing developer instructions structured using the template above, the AI agent MUST adhere to the following behaviors:
-
-1. **Explicit Reference Resolution (Context Anchoring):** When the developer mentions specific files (e.g., using `@[filename]`), you MUST immediately load and read the contents of those files using `view_file` to capture their requirements before writing any code.
-2. **Mandated Cross-Checking:** When the developer instructs you to "cross-check" or "verify" with a rules file (e.g., `@rules_qualitycode.md`), you MUST open that file, identify its constraints, and perform a strict compliance check against your proposed code.
-3. **Strict Adherence to Negative Constraints:** Any negative constraint (e.g., "DO NOT", "JANGAN", "never", "prohibited") in the prompt or referenced PRD files represents a blocking rule. You MUST explicitly verify that your final output does not violate any of these constraints.
-4. **Triggered Deep Analysis (Keywords: "Analyze/Analisa", "Check/Cek"):** If the developer's prompt contains analysis keywords (e.g., "Analyze", "Analisa", "Check", "Cek", "Investigate"):
-   - You MUST first inspect the `Quick Reference Index` to see if the topic is mapped to any module.
-   - If mapped, you MUST use `view_file` to read that module file completely.
-   - If the topic is NOT in the Index, you MUST perform a repository-wide fuzzy/synonym search across all `go-modules/` files using `grep_search` to verify if the concept is discussed elsewhere under a different name.
-   - You are strictly prohibited from declaring a feature or rule "not found" without performing this double-check sequence.
+> ⚡ **MANDATORY AI AGENT DIRECTIVE (READING PROTOCOL):** 
+> Whenever you are tasked with writing, refactoring, designing, or discussing the Golang / backend architecture in this project, you **MUST** strictly adhere to the architectural standards defined in this file. This file serves as the singular *Source of Truth*.
+>
+> **Token Efficiency & Context Routing Protocol:**
+> You MUST follow this reading sequence strictly — **DO NOT** read the entire monolithic file blindly or use fuzzy grep searches upfront:
+> 
+> 1. **Read the Quick Reference Index First** (Section `📌 Quick Reference Index` below). This index contains summaries of all sections and "When to Read" guidance for contextual routing.
+> 2. **Read Section 1–6 (Core Rules)** completely ONLY IF the task involves base layer structures, Dependency Injection, DTOs, error handling, or response standardization.
+> 3. **Read ONLY the relevant `go-modules/*.md` files** based on the "When to Read" column in the Quick Reference Index. Do not load or read modules unrelated to the current task.
+> 4. **Do not invoke the `/go-clean-architecture` skill manually** — this file already encompasses all instructions from that skill. Invoking the skill causes the same rules to be injected twice, resulting in severe token waste.
+>
+> 🛑 **EXPLICIT ACKNOWLEDGMENT (BLOCKING REQUIREMENT):**
+> Before generating any code, you **MUST explicitly list all rules labeled "BLOCKING"** that you discovered from the modules you just read. This is to mathematically prove to the user that you have not bypassed critical architectural constraints.
 
 ---
 
