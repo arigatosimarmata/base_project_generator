@@ -1,0 +1,34 @@
+# Architecture Changelog & Knowledge Updates
+> **Source of Truth for:** [clean_architecture_go.md](clean_architecture_go.md)
+> **Read this file when:** Auditing architecture history, verifying if a pattern was already documented, or checking what changed in a specific period.
+
+---
+
+## 2026-07 (July)
+
+- **[2026-07-11]** - **SOLID Principles Taxonomy (Explicit Labeling)**: Formalized all 5 SOLID principles with explicit names, enforcement rules, anti-pattern examples, and AI Agent Directives. Previously applied implicitly; now formally documented. *(See §7.26 in go-modules/07-design-patterns.md)*.
+- **[2026-07-11]** - **UnitOfWork Pattern (Full Interface Definition)**: Replaced the placeholder §7.6 with a complete `domain.UnitOfWork` + `domain.TxContext` interface definition, adapter implementation, and usecase consumption example. Eliminates the dangling reference that caused inconsistent transactional implementations. *(See §7.6 in go-modules/06-patterns.md)*.
+- **[2026-07-11]** - **ISP Enforcement — Role Interfaces**: Added explicit Interface Segregation Principle enforcement rules prohibiting "Fat Interfaces". Usecases must depend only on the minimum interface surface they actually invoke. Role Interface (Reader/Writer/Deleter) pattern documented. *(See §7.26.4 in go-modules/07-design-patterns.md)*.
+- **[2026-07-11]** - **LSP Enforcement — Behavioral Contract Rule**: Added Liskov Substitution Principle enforcement: all interface implementations must honor the full error contract (no silent swallowing, no panics). `NoopAuditLogger` formalized as the canonical correct LSP example. *(See §7.26.3 in go-modules/07-design-patterns.md)*.
+- **[2026-07-11]** - **DRY Boundary Clarification (Isomorphic Data Rule)**: Formalized the rule that cross-layer structural duplication (DTO ↔ Entity ↔ DB Model) is intentional architectural decoupling, not a DRY violation. AI Agents explicitly directed to abort any consolidation of cross-layer structs. *(See §7.27 in go-modules/07-design-patterns.md)*.
+- **[2026-07-11]** - **OCP via Strategy Pattern**: Prohibited unbounded `switch-case` expansion in usecases for variant business logic. Strategy Pattern mandated as the OCP-compliant mechanism. *(See §7.26.2 in go-modules/07-design-patterns.md)*.
+- **[2026-07-11]** - **Functional Options Pattern**: Documented the idiomatic Go Functional Options pattern (`WithXxx(...)`) for configuring optional parameters in `internal/clients/` adapters. Replaces ambiguous all-optional Config Struct pattern. *(See §7.28 in go-modules/07-design-patterns.md)*.
+- **[2026-07-11]** - **Error Taxonomy (`errs/` package)**: Formally defined the `errs/` package structure with sentinel error variables (`errs.ErrNotFound`, etc.) and application error code constants (`errs.CodeNotFound`, etc.). Establishes cross-layer error propagation contract and prohibits inline `errors.New()` outside `errs/`. *(See §7.29 in go-modules/07-design-patterns.md)*.
+- **[2026-07-11]** - **AI Agent Directives Standardization**: Added explicit `MANDATORY — AI Agent Directive` blocks to all 6 existing module files (01–06). Previously only §7.22 in file 06 had an AI agent callout. All modules now have consistent directive headers with BLOCKING rule classification. *(See headers in all go-modules/*.md files)*.
+- **[2026-07-06]** - **AI Agent Prompting Guide**: Added Section 8 detailing prompting best practices (context anchoring, constraints, and explicit cross-checking) to prevent AI oversight and ensure strict adherence to modular PRD modules. *(See Section 8)*.
+- **[2026-07-03]** - **Centralized DB Connection Pool Parameterization**: Enforced centralization of database pool parameters (`MaxOpenConns`, `MaxIdleConns`, `ConnMaxLifetime`) via environment variables rather than hardcoding them in CLI command scopes, avoiding socket churn under high concurrent load. *(See Section 7.23)*.
+- **[2026-07-02]** - **Configurable Log Rotation & Dual Output**: Documented standard implementation of `gopkg.in/natefinch/lumberjack.v2` to support structured log rotation, size/age limits, and dual output routing (stdout + file) via environment variables to prevent disk saturation in long-running processes. *(See Section 7.3)*.
+- **[2026-07-02]** - **Concurrent DDL Throttling**: Introduced concurrent dynamic schema/table creation pattern using Goroutines bounded by a semaphore channel to prevent DB connection pool exhaustion while increasing DDL execution speed by up to 20x. *(See Section 7.23)*.
+- **[2026-07-02]** - **Usecase Process Isolation**: Enforced standard that usecase layers must never call `log.Fatal` or `os.Exit`. Usecases must propagate errors upwards via wrapping (`fmt.Errorf`) to ensure graceful error handling at the entrypoint level. *(See Section 6.4)*.
+- **[2026-07-02]** - **Strict Context Isolation**: Defined strict isolation rules for `context.Context` to prevent mutable domain state leakage across layers. *(See Section 7.5)*.
+
+---
+
+## 2026-06 (June)
+
+- **[2026-06-23]** - **Quick Reference Index (AI Agent Navigator)**: Added a compact navigation table after Section 0 listing all sections with 1-line summary and "Baca Saat" guidance. Enables AI agents to identify and load only the relevant section per task instead of reading the full document, reducing token consumption by ~85% on focused tasks.
+- **[2026-06-22]** - **Cognitive Complexity Reduction — Method Extraction Pattern**: Documented mandatory refactoring strategies for keeping function Cognitive Complexity ≤ 15 (SonarQube S3776): early-return guard clauses, private method extraction for enrichment logic, package-level const slices, and typed `applyIfNotNil`-style helpers to eliminate repetitive nil-pointer dereference blocks. *(See Section 7.24)*.
+- **[2026-06-22]** - **Database Performance & SQL Tuning**: Added mandatory EXPLAIN plan analysis rules, Two-Step Query / CTE pattern to replace dangerous dependent subqueries, composite index strategy, and non-negotiable SQL best practices (no `SELECT *`, non-sargable predicates, UNION ALL, parameterized queries, transaction isolation awareness). *(See Section 7.23)*.
+- **[2026-06-22]** - **Resilience Engineering**: Added mandatory Fail-Fast vs Silent-Failure classification rules, error propagation standards (wrap-with-context per layer, log-once rule), and distributed resilience patterns (Circuit Breaker, Retry+Backoff+Jitter, Timeout, Bulkhead, Idempotency, DLQ). *(See Section 7.22)*.
+- **[2026-06-22]** - **AI Auto-Commit Protocol**: Formalized the workflow for AI agents to automatically commit and push any new additions to this living document, ensuring seamless synchronization with the remote repository. *(See AI Agent Git Automation Protocol below)*.
+- **[2026-06-21]** - **Generic Repository Pattern**: Introduced Go Generics (1.18+) `BaseRepository[T]` to eliminate redundant CRUD boilerplate and enforce type-safe persistence operations. *(See Section 6.5)*.
