@@ -1,5 +1,5 @@
 # Architecture Changelog & Knowledge Updates
-> **Source of Truth for:** [clean_architecture_go.md](clean_architecture_go.md)
+> **Source of Truth for:** [clean_architecture_go.md](../clean_architecture_go.md)
 > **Read this file when:** Auditing architecture history, verifying if a pattern was already documented, or checking what changed in a specific period.
 
 ---

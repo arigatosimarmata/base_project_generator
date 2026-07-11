@@ -92,7 +92,7 @@ When executing developer instructions structured using the template above, the A
 When a new architectural pattern is discovered that does not fit any existing module:
 1. **Fits an existing module** (thematically related) → append to that module file.
 2. **Standalone concern** (> 40 lines, distinct domain) → create a new file: `go-modules/{next-number}-{concern-name}.md`, then add a new row to the table above.
-3. **After any module change**: update [CHANGELOG.md](CHANGELOG.md), update this index table if needed, then execute the AI Agent Git Automation Protocol (add → commit → push all affected files).
+3. **After any module change**: update [CHANGELOG.md](go-modules/CHANGELOG.md), update this index table if needed, then execute the AI Agent Git Automation Protocol (add → commit → push all affected files).
 
 ## 1. Overview
 This document defines the design and standards for a Generic Go Clean Architecture Base Project. The boilerplate provides a reusable, modular, and scalable foundation for future backend services, so teams don't need to re-architect from scratch for every new project, improving development velocity and cross-project consistency.
@@ -255,7 +255,7 @@ Errors must never be silently swallowed. Persistence-layer errors are wrapped at
 
 All extended architecture standards are maintained as separate module files in `backend/go-modules/`. Refer to the `📌 Quick Reference Index` above to identify which module to read for the current task.
 
-> **Do not add new content directly to this file below this point.** All new architectural patterns, standards, and guidelines must be added to the appropriate module file in `go-modules/`, with a corresponding Changelog entry in `CHANGELOG.md` and an updated row in the Quick Reference Index above.
+> **Do not add new content directly to this file below this point.** All new architectural patterns, standards, and guidelines must be added to the appropriate module file in `go-modules/`, with a corresponding Changelog entry in `go-modules/CHANGELOG.md` and an updated row in the Quick Reference Index above.
 
 ---
 
@@ -266,16 +266,16 @@ All extended architecture standards are maintained as separate module files in `
 
 During the software development lifecycle, if an AI agent or engineer discovers a new optimization, identifies an architectural anti-pattern, or formulates a highly effective technical standard (knowledge/skill), **it MUST be retroactively integrated into this document immediately**. This ensures the boilerplate evolves continuously toward greater efficiency, maintainability, and code quality.
 
-Every new integration MUST be logged in [CHANGELOG.md](CHANGELOG.md).
+Every new integration MUST be logged in [CHANGELOG.md](go-modules/CHANGELOG.md).
 
 ### Required Update Format:
-Every update entry must strictly follow this list-based schema in `CHANGELOG.md`:
+Every update entry must strictly follow this list-based schema in `go-modules/CHANGELOG.md`:
 - **[YYYY-MM-DD]** - **[Short Title of Knowledge/Update]**: [Detailed explanation of WHAT the knowledge is, the anti-pattern resolved, or efficiency gained]. *(See Section X.Y for details)*.
 
 ### AI Agent Git Automation Protocol
 When an AI agent updates this document or any module, the agent MUST immediately execute the following isolated workflow:
-1. **Validate**: Ensure the changelog format in `CHANGELOG.md` is strictly followed.
-2. **Isolate**: Stage the affected documentation files (`git add backend/clean_architecture_go.md backend/CHANGELOG.md backend/go-modules/...`).
+1. **Validate**: Ensure the changelog format in `go-modules/CHANGELOG.md` is strictly followed.
+2. **Isolate**: Stage the affected documentation files (`git add backend/clean_architecture_go.md backend/go-modules/CHANGELOG.md backend/go-modules/...`).
 3. **Commit**: Use a semantic commit message, e.g., `docs(arch): update clean architecture base rules with [topic]`.
 4. **Push**: Push to the current remote branch (`git push`).
 This guarantees the living document is continuously synchronized with the remote repository without risking application code stability.
