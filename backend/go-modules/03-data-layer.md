@@ -5,6 +5,17 @@
 > **Keywords:** database, sql, mysql, postgresql, redis, cache, mongodb, elasticsearch, singleflight, sql tuning, explain, connection pool, semaphore
 > **Target Folder/Packages:** `internal/repositories/`
 
+> **MANDATORY — AI Agent Directive:** Apply all rules in this module when:
+> - Writing any SQL query or repository method (§7.23)
+> - Adding Redis caching, MongoDB, or Elasticsearch adapters (§7.18)
+> - Implementing concurrent read deduplication (§7.20)
+>
+> **BLOCKING rules (non-negotiable for every query):**
+> 1. Never use `SELECT *` — always enumerate columns explicitly.
+> 2. Never wrap indexed columns in functions in a WHERE clause (`YEAR()`, `MONTH()`, `LOWER()`) — they break index usage (non-sargable).
+> 3. Every non-trivial query MUST have an `EXPLAIN` result reviewed before merge.
+> 4. Usecases MUST depend on `domain.*Repository` interfaces, never on `*sql.DB` or `*redis.Client` directly.
+
 ---
 
 ### 7.18. Redis Caching, MongoDB & Elasticsearch (Core vs. On-Demand)

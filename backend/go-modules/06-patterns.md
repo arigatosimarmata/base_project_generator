@@ -5,6 +5,14 @@
 > **Keywords:** context, transaction, atomic, db debug, broker, kafka, rabbitmq, resilience, retry, circuit breaker, timeout, bulkhead, fail-fast
 > **Target Folder/Packages:** `internal/usecases/`, `internal/domain/`
 
+> **MANDATORY — AI Agent Directive:** Every engineer and AI agent working on this codebase MUST apply all rules in this module without exception when:
+> - Writing usecases that require cross-repository atomic operations (§7.6)
+> - Implementing context propagation across any function boundary (§7.5)
+> - Building or modifying message broker adapters (§7.21)
+> - Evaluating resilience characteristics of any outbound call (§7.22)
+>
+> Rules marked **BLOCKING** represent hard architectural violations. Do not generate code that violates them.
+
 ---
 
 ### 7.5. Context Propagation
@@ -16,8 +24,127 @@
 
 ---
 
-### 7.6. Transaction Management
-There is currently no pattern for cross-repository database transactions (e.g., a usecase that must insert into two tables atomically). Introduce a `UnitOfWork` pattern or transaction manager interface in the domain layer, so the usecase can control commit/rollback without depending on driver-specific transaction details.
+### 7.6. Transaction Management — UnitOfWork Pattern
+
+For cross-repository atomic operations (e.g., a usecase that must insert into two tables and publish an event, all-or-nothing), use the **UnitOfWork** pattern. The transaction manager interface is defined in the domain layer — usecases control commit/rollback without depending on any driver-specific transaction detail.
+
+**Port definition (domain layer):**
+```go
+// internal/domain/unit_of_work.go
+package domain
+
+import "context"
+
+// UnitOfWork is the transaction boundary abstraction.
+// It allows a usecase to atomically coordinate writes across multiple repositories
+// without importing any database driver.
+type UnitOfWork interface {
+    // Begin starts a new transaction and returns a transactional context.
+    // All repository operations using this context participate in the same transaction.
+    Begin(ctx context.Context) (TxContext, error)
+}
+
+// TxContext carries the active transaction and exposes typed repository accessors
+// so the usecase can call repositories within the transaction boundary.
+type TxContext interface {
+    context.Context
+
+    // Commit commits the transaction. Call only when all operations succeed.
+    Commit() error
+
+    // Rollback aborts the transaction. Always defer this after Begin.
+    Rollback() error
+
+    // Typed accessors — expose only the repositories needed by usecases.
+    // Add a new accessor here when a new transactional usecase requires it.
+    UserRepo() UserRepository
+    OrderRepo() OrderRepository
+    // ... add more as needed, following ISP (§7.28.4): expose only what callers need.
+}
+```
+
+**Adapter implementation (repository/infrastructure layer):**
+```go
+// internal/repositories/unit_of_work.go
+package repositories
+
+import (
+    "context"
+    "database/sql"
+    "fmt"
+    "your-module/internal/domain"
+)
+
+type sqlUnitOfWork struct {
+    db *sql.DB
+}
+
+func NewUnitOfWork(db *sql.DB) domain.UnitOfWork {
+    return &sqlUnitOfWork{db: db}
+}
+
+func (u *sqlUnitOfWork) Begin(ctx context.Context) (domain.TxContext, error) {
+    tx, err := u.db.BeginTx(ctx, nil)
+    if err != nil {
+        return nil, fmt.Errorf("UnitOfWork.Begin: %w", err)
+    }
+    return &sqlTxContext{
+        Context:   ctx,
+        tx:        tx,
+        userRepo:  NewUserRepository(tx),  // repository receives *sql.Tx, not *sql.DB
+        orderRepo: NewOrderRepository(tx),
+    }, nil
+}
+
+type sqlTxContext struct {
+    context.Context
+    tx        *sql.Tx
+    userRepo  domain.UserRepository
+    orderRepo domain.OrderRepository
+}
+
+func (t *sqlTxContext) Commit() error   { return t.tx.Commit() }
+func (t *sqlTxContext) Rollback() error { return t.tx.Rollback() }
+func (t *sqlTxContext) UserRepo() domain.UserRepository  { return t.userRepo }
+func (t *sqlTxContext) OrderRepo() domain.OrderRepository { return t.orderRepo }
+```
+
+**Usecase consumption:**
+```go
+// internal/usecases/create_order_usecase.go
+type createOrderUsecase struct {
+    uow domain.UnitOfWork
+}
+
+func (u *createOrderUsecase) Execute(ctx context.Context, req dto.CreateOrderRequest) error {
+    txCtx, err := u.uow.Begin(ctx)
+    if err != nil {
+        return fmt.Errorf("createOrderUsecase.Execute: begin tx: %w", err)
+    }
+    defer txCtx.Rollback() // safe to call after Commit — sql.Tx.Rollback is a no-op then
+
+    if err := txCtx.UserRepo().DeductBalance(txCtx, req.UserID, req.Amount); err != nil {
+        return fmt.Errorf("createOrderUsecase.Execute: deduct balance: %w", err)
+    }
+
+    if err := txCtx.OrderRepo().Create(txCtx, req.ToOrder()); err != nil {
+        return fmt.Errorf("createOrderUsecase.Execute: create order: %w", err)
+    }
+
+    return txCtx.Commit()
+}
+```
+
+**Rules:**
+1. **BLOCKING:** Usecases MUST NOT import `database/sql` or call `db.BeginTx` directly. All transactional logic flows through `domain.UnitOfWork`.
+2. Always `defer txCtx.Rollback()` immediately after `Begin` — even when you plan to `Commit`. `Rollback` after `Commit` is a safe no-op for `*sql.Tx`.
+3. Repositories must accept both `*sql.DB` and `*sql.Tx` as their query executor — use `interface { QueryContext(...) ...; ExecContext(...) ... }` or `sqlx.ExtContext` as the constructor parameter type, not `*sql.DB` directly.
+4. Audit trail writes (§7.16) that must participate in the same transaction should be called via a transactional `AuditLogger` adapter receiving the same `TxContext`.
+5. If a usecase only writes to one repository, direct repository injection (§6.1) is sufficient — do not over-engineer with `UnitOfWork` for single-repository operations.
+
+**AI Agent Directive:**
+- If a usecase needs to write to ≥ 2 repositories atomically → **use `domain.UnitOfWork`**. Never call `db.Begin()` or `db.BeginTx()` directly from a usecase.
+- If generating a new transactional usecase, add the required repository accessor to `domain.TxContext` and implement it in `sqlTxContext` — do not expose a generic raw `*sql.Tx`.
 
 ---
 

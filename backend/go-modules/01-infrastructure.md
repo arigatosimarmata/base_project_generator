@@ -5,6 +5,14 @@
 > **Keywords:** migration, goose, golang-migrate, seeder, graceful shutdown, signal, CLI, cobra, Dockerfile, docker-compose, infrastructure
 > **Target Folder/Packages:** `cmd/`, `database/migration/`, `deploy/`
 
+> **MANDATORY — AI Agent Directive:** Apply all rules in this module when:
+> - Setting up a new CLI subcommand or entrypoint (§7.13)
+> - Writing or modifying database migration files (§7.2)
+> - Configuring graceful shutdown behavior (§7.8)
+> - Authoring or modifying Dockerfile or docker-compose (§7.14)
+>
+> **BLOCKING:** All CLI subcommands MUST reuse the same composition root (DI bootstrap). Never duplicate DB/Redis initialization across subcommands.
+
 ---
 
 ### 7.2. Database Migration

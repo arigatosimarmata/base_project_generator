@@ -5,6 +5,13 @@
 > **Keywords:** log, logging, log-rotate, rotation, lumberjack, health check, healthz, readyz, request-id, tracing, metrics, zap, zerolog, opentelemetry, prometheus
 > **Target Folder/Packages:** `logger/`, `internal/handlers/health/`
 
+> **MANDATORY — AI Agent Directive:** Apply all rules in this module when:
+> - Setting up or modifying the application logger (§7.3)
+> - Adding or changing `X-Request-ID` / trace propagation (§7.17)
+> - Writing or modifying `/healthz` or `/readyz` endpoints (§7.19)
+>
+> **BLOCKING:** Request-scoped values (request_id, actor_id) MUST be accessed via `ctxutil` helpers only. Never use raw `context.Value("key")` with string literals across packages.
+
 ---
 
 ### 7.3. Logging & Observability

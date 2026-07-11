@@ -5,6 +5,17 @@
 > **Keywords:** security, authentication, auth, authorization, token, jwt, api key, rate limit, versioning, API version, audit, audit trail, audit log, middleware
 > **Target Folder/Packages:** `internal/middleware/auth/`, `internal/middleware/ratelimit/`
 
+> **MANDATORY — AI Agent Directive:** Apply all rules in this module when:
+> - Writing or modifying authentication or authorization middleware (§7.7)
+> - Adding or changing rate-limiting behavior (§7.11)
+> - Implementing or reviewing audit trail writes (§7.16)
+> - Changing API versioning strategy (§7.12)
+>
+> **BLOCKING rules:**
+> 1. `TokenValidator` MUST be injected as a domain interface — never hardcode JWT parsing inside middleware.
+> 2. `AuditLogger` writes that touch the same business transaction MUST participate in the same `UnitOfWork` transaction (§7.6).
+> 3. The `audit_logs` table is APPEND-ONLY at the application level. Never generate UPDATE or DELETE statements against it.
+
 ---
 
 ### 7.7. Authentication & Authorization Hook

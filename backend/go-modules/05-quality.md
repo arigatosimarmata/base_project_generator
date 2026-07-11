@@ -5,6 +5,17 @@
 > **Keywords:** testing, unit test, mock, mockery, validation, validator, lint, golangci-lint, ci, cd, swagger, api docs, cognitive complexity, sonar, sonarqube
 > **Target Folder/Packages:** `tests/`, `internal/...` (validation/complexity)
 
+> **MANDATORY — AI Agent Directive:** Apply all rules in this module when:
+> - Generating or reviewing unit tests for usecases (§7.1)
+> - Writing or modifying DTO validation rules (§7.4)
+> - Evaluating a function's cyclomatic/cognitive complexity (§7.24)
+> - Configuring linting or CI pipelines (§7.9)
+>
+> **BLOCKING rules:**
+> 1. Every `*_usecase.go` MUST have a corresponding `*_usecase_test.go` with table-driven test structure.
+> 2. Functions with SonarQube Cognitive Complexity > 15 MUST be refactored before merge. Aim ≤ 10.
+> 3. Mock implementations MUST NOT use `panic("not implemented")` — use `mockery`-generated return value configuration instead (see LSP rule in §7.29).
+
 ---
 
 ### 7.1. Testing Strategy
